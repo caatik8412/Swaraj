@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Swaraj Krushi Seva Kendra — Billing &amp; Inventory</title>
+<style>
+  :root{
+    --green:#1B5E20; --green-light:#2E7D32; --amber:#F9A825; --bg:#F4F6F1;
+    --card:#FFFFFF; --border:#D8DED3; --text:#1F2A1F; --muted:#6B7A6B; --danger:#C62828;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);}
+  header{background:linear-gradient(135deg,var(--green),var(--green-light));color:#fff;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+  header h1{margin:0;font-size:19px;}
+  header .sub{font-size:12px;opacity:.85;}
+  nav{display:flex;gap:6px;background:#fff;padding:8px 16px;border-bottom:2px solid var(--border);flex-wrap:wrap;}
+  nav button{background:none;border:none;padding:9px 14px;font-size:13.5px;font-weight:600;color:var(--muted);cursor:pointer;border-radius:6px;}
+  nav button.active{background:var(--green);color:#fff;}
+  main{padding:18px;max-width:1200px;margin:0 auto;}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;}
+  .grid{display:grid;gap:10px;}
+  .g2{grid-template-columns:1fr 1fr;}
+  .g3{grid-template-columns:1fr 1fr 1fr;}
+  .g4{grid-template-columns:1fr 1fr 1fr 1fr;}
+  label{font-size:12px;color:var(--muted);font-weight:600;display:block;margin-bottom:3px;}
+  input,select{width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:13.5px;background:#fff;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th,td{padding:7px 8px;border-bottom:1px solid var(--border);text-align:left;}
+  th{background:#EEF3EA;font-size:11.5px;text-transform:uppercase;color:var(--muted);}
+  .btn{background:var(--green);color:#fff;border:none;padding:9px 16px;border-radius:6px;cursor:pointer;font-weight:600;font-size:13.5px;}
+  .btn.outline{background:none;border:1px solid var(--green);color:var(--green);}
+  .btn.danger{background:var(--danger);}
+  .btn.sm{padding:5px 10px;font-size:12px;}
+  .btn.amber{background:var(--amber);color:#3a2a00;}
+  .row{display:flex;gap:8px;align-items:center;}
+  .right{text-align:right;}
+  .total-box{background:#EEF3EA;border-radius:8px;padding:12px;font-size:14px;}
+  .total-box .line{display:flex;justify-content:space-between;padding:3px 0;}
+  .total-box .grand{font-size:18px;font-weight:700;color:var(--green);border-top:1px solid var(--border);margin-top:6px;padding-top:6px;}
+  .pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;}
+  .pill.active{background:#DCEEDC;color:var(--green);}
+  .pill.cancelled{background:#FBE0E0;color:var(--danger);}
+  .pill.low{background:#FDEBD0;color:#8A5A00;}
+  .search-row{margin-bottom:10px;}
+  #toast{position:fixed;bottom:20px;right:20px;background:#222;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;display:none;z-index:999;}
+  .hidden{display:none !important;}
+  /* PRINT */
+  #printArea{display:none;}
+  @media print{
+    body *{visibility:hidden;}
+    body:not(.printing-statement) #printArea, body:not(.printing-statement) #printArea *{visibility:visible;}
+    body.printing-statement #printStatement, body.printing-statement #printStatement *{visibility:visible;}
+    body:not(.printing-statement) #printArea{display:block;position:absolute;top:0;left:0;width:100%;padding:10px;}
+    body.printing-statement #printStatement{display:block !important;position:absolute;top:0;left:0;width:100%;padding:10px;}
+  }
+  .inv-head{display:flex;justify-content:space-between;border-bottom:2px solid var(--green);padding-bottom:8px;margin-bottom:8px;}
+  .inv-head h2{margin:0;color:var(--green);}
+  .inv-meta{font-size:12px;color:var(--muted);}
+  .inv-box{border:1px solid #999;padding:8px;font-size:12px;border-radius:4px;}
+  .small-muted{font-size:11px;color:var(--muted);}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>🌾 Swaraj Krushi Seva Kendra</h1>
+    <div class="sub" id="hdrAddr">Billing &amp; Inventory</div>
+  </div>
+  <div class="sub" id="hdrGst">GSTIN: —</div>
+</header>
+
+<nav id="navBar">
+  <button data-tab="sale" class="active">New Sale</button>
+  <button data-tab="register">Sales Register</button>
+  <button data-tab="purchase">Purchase Entry</button>
+  <button data-tab="stock">Products / Stock</button>
+  <button data-tab="customers">Customers</button>
+  <button data-tab="settings">Settings</button>
+</nav>
+
+<main>
+
+<!-- ============ NEW SALE ============ -->
+<section id="tab-sale">
+  <div class="card">
+    <h3>Customer</h3>
+    <div class="grid g4">
+      <div><label>Search / Select Customer</label><input id="custSearch" placeholder="Type name or mobile..." list="custList"><datalist id="custList"></datalist></div>
+      <div><label>Name</label><input id="cName"></div>
+      <div><label>Village</label><input id="cVillage"></div>
+      <div><label>Mobile</label><input id="cMobile"></div>
+    </div>
+    <div class="grid g4" style="margin-top:8px;">
+      <div><label>Customer Type</label>
+        <select id="cType"><option value="Farmer">Farmer</option><option value="Dealer">Dealer / Shop</option></select>
+      </div>
+      <div><label>GSTIN (if dealer, optional)</label><input id="cGstin" placeholder="27ABCDE1234F1Z5"></div>
+      <div><label>Bill Date</label><input type="date" id="saleDate"></div>
+      <div style="display:flex;align-items:flex-end;"><button class="btn outline" id="saveCustBtn" style="width:100%;">💾 Save Customer</button></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Items</h3>
+    <table id="saleTable">
+      <thead><tr><th style="width:26%;">Product</th><th>HSN</th><th>GST%</th><th>Qty</th><th>Unit</th><th>Rate</th><th>Taxable</th><th>Tax</th><th>Total</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <button class="btn outline sm" id="addRowBtn" style="margin-top:8px;">+ Add Item</button>
+  </div>
+
+  <div class="grid g2">
+    <div class="card">
+      <label>Tax Type</label>
+      <select id="taxType">
+        <option value="CGST_SGST">Intra-state (CGST + SGST)</option>
+        <option value="IGST">Inter-state (IGST)</option>
+      </select>
+      <p class="small-muted">Auto-suggested from customer GSTIN state code, override if needed.</p>
+    </div>
+    <div class="card total-box" id="saleTotals">
+      <div class="line"><span>Taxable Amount</span><span id="tTaxable">₹0.00</span></div>
+      <div class="line" id="tCgstRow"><span>CGST</span><span id="tCgst">₹0.00</span></div>
+      <div class="line" id="tSgstRow"><span>SGST</span><span id="tSgst">₹0.00</span></div>
+      <div class="line" id="tIgstRow"><span>IGST</span><span id="tIgst">₹0.00</span></div>
+      <div class="line grand"><span>Grand Total</span><span id="tGrand">₹0.00</span></div>
+      <div style="margin-top:8px;"><label>Amount Received Now</label><input type="number" id="amountReceived" value="0" step="0.01"></div>
+      <div class="line" style="font-weight:700;color:var(--danger);"><span>Balance Due (Credit)</span><span id="tBalance">₹0.00</span></div>
+    </div>
+  </div>
+
+  <div class="row">
+    <button class="btn" id="saveSaleBtn">✅ Save &amp; Print Bill</button>
+    <button class="btn outline" id="clearSaleBtn">Clear</button>
+  </div>
+</section>
+
+<!-- ============ SALES REGISTER ============ -->
+<section id="tab-register" class="hidden">
+  <div class="card">
+    <div class="row search-row">
+      <input id="regSearch" placeholder="Search bill no / customer / village...">
+      <input type="date" id="regFrom"><input type="date" id="regTo">
+      <button class="btn outline sm" id="regFilterBtn">Filter</button>
+    </div>
+    <table id="regTable">
+      <thead><tr><th>Bill#</th><th>Date</th><th>Customer</th><th>Village</th><th>Taxable</th><th>Tax</th><th>Total</th><th>Status</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============ PURCHASE ENTRY ============ -->
+<section id="tab-purchase" class="hidden">
+  <div class="card">
+    <h3>Supplier Invoice</h3>
+    <div class="grid g3">
+      <div><label>Supplier Name</label><input id="pSupplier"></div>
+      <div><label>Invoice No.</label><input id="pInvoiceNo"></div>
+      <div><label>Date</label><input type="date" id="pDate"></div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Items Received</h3>
+    <table id="purchTable">
+      <thead><tr><th style="width:26%;">Product</th><th>GST%</th><th>Qty</th><th>Unit</th><th>Purch. Rate</th><th>Taxable</th><th>GST Amt</th><th>Total</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <button class="btn outline sm" id="addPurchRowBtn" style="margin-top:8px;">+ Add Item</button>
+  </div>
+  <div class="card total-box">
+    <div class="line"><span>Taxable</span><span id="pTaxable">₹0.00</span></div>
+    <div class="line"><span>GST</span><span id="pGst">₹0.00</span></div>
+    <div class="line grand"><span>Total</span><span id="pGrand">₹0.00</span></div>
+  </div>
+  <button class="btn" id="savePurchBtn">📦 Save Purchase (adds to stock)</button>
+
+  <div class="card" style="margin-top:18px;">
+    <h3>Recent Purchases</h3>
+    <table id="purchHistTable">
+      <thead><tr><th>Date</th><th>Invoice</th><th>Supplier</th><th>Taxable</th><th>GST</th><th>Total</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============ PRODUCTS / STOCK ============ -->
+<section id="tab-stock" class="hidden">
+  <div class="card">
+    <h3>Add / Edit Product</h3>
+    <div class="grid g4">
+      <div><label>Name</label><input id="prName"></div>
+      <div><label>HSN Code</label><input id="prHsn"></div>
+      <div><label>Unit</label><input id="prUnit" placeholder="Bag/Kg/Ltr/Pkt"></div>
+      <div><label>GST %</label><input id="prGst" type="number" value="5"></div>
+    </div>
+    <div class="grid g4" style="margin-top:8px;">
+      <div><label>Purchase Rate</label><input id="prPRate" type="number"></div>
+      <div><label>Sale Rate</label><input id="prSRate" type="number"></div>
+      <div><label>Opening Stock</label><input id="prStock" type="number" value="0"></div>
+      <div><label>Category</label><input id="prCat" placeholder="Fertilizer/Seed/Pesticide"></div>
+    </div>
+    <input type="hidden" id="prId">
+    <div class="row" style="margin-top:10px;">
+      <button class="btn" id="saveProdBtn">💾 Save Product</button>
+      <button class="btn outline" id="clearProdBtn">Clear</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="row search-row"><input id="prodSearch" placeholder="Search products..."><button class="btn amber sm" id="loadDemoBtn">⚡ Load Demo Products (24 items)</button></div>
+    <table id="prodTable">
+      <thead><tr><th>Name</th><th>Category</th><th>HSN</th><th>GST%</th><th>Unit</th><th>P.Rate</th><th>S.Rate</th><th>Stock</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============ CUSTOMERS ============ -->
+<section id="tab-customers" class="hidden">
+  <div class="card">
+    <h3>💰 Record Payment Received (against outstanding credit)</h3>
+    <div class="grid g4">
+      <div><label>Customer</label><input id="recvCust" list="custList" placeholder="Type name..."></div>
+      <div><label>Amount</label><input id="recvAmt" type="number"></div>
+      <div><label>Mode</label><select id="recvMode"><option>Cash</option><option>UPI</option><option>Bank Transfer</option><option>Cheque</option></select></div>
+      <div style="display:flex;align-items:flex-end;"><button class="btn" id="saveRecvBtn" style="width:100%;">Save Receipt</button></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="row search-row"><input id="custTableSearch" placeholder="Search customers..."></div>
+    <table id="custTable">
+      <thead><tr><th>Name</th><th>Village</th><th>Mobile</th><th>GSTIN</th><th>Type</th><th>Total Billed</th><th>Received</th><th>Outstanding</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============ SETTINGS ============ -->
+<section id="tab-settings" class="hidden">
+  <div class="card">
+    <h3>🚀 Quick Demo Setup</h3>
+    <p class="small-muted">Loads 24 demo products, 4 demo customers (farmers + a dealer), 1 purchase, 3 sales (one fully paid, one partly paid, one on full credit), and 2 receipts (including an advance) — so you can see billing, stock, outstanding, and statements working end to end.</p>
+    <button class="btn amber" id="loadFullDemoBtn">⚡ Load Full Demo Data</button>
+  </div>
+  <div class="card">
+    <h3>Shop Details (printed on every bill)</h3>
+    <div class="grid g2">
+      <div><label>Shop Name</label><input id="setShopName"></div>
+      <div><label>GSTIN</label><input id="setGstin"></div>
+      <div><label>Address</label><input id="setAddress"></div>
+      <div><label>Village/Taluka</label><input id="setVillage"></div>
+      <div><label>State</label><input id="setState"></div>
+      <div><label>State Code</label><input id="setStateCode"></div>
+      <div><label>Mobile</label><input id="setMobile"></div>
+      <div><label>Fertilizer License No.</label><input id="setLicFert"></div>
+      <div><label>Seed License No.</label><input id="setLicSeed"></div>
+      <div><label>Pesticide License No.</label><input id="setLicPest"></div>
+    </div>
+    <h3 style="margin-top:14px;">Bank Details (for bill footer)</h3>
+    <div class="grid g3">
+      <div><label>Bank Name</label><input id="setBankName"></div>
+      <div><label>Account No.</label><input id="setBankAcc"></div>
+      <div><label>IFSC</label><input id="setIfsc"></div>
+    </div>
+    <button class="btn" id="saveSettingsBtn" style="margin-top:12px;">💾 Save Settings</button>
+  </div>
+</section>
+
+</main>
+
+<!-- ============ PRINT AREA ============ -->
+<div id="printArea">
+  <div class="inv-head">
+    <div>
+      <h2 id="pvShopName">Swaraj Krushi Seva Kendra</h2>
+      <div class="inv-meta" id="pvShopAddr"></div>
+      <div class="inv-meta" id="pvShopLic"></div>
+    </div>
+    <div class="inv-meta right">
+      <div><strong>TAX INVOICE</strong></div>
+      <div>Bill No: <span id="pvBillNo"></span></div>
+      <div>Date: <span id="pvDate"></span></div>
+      <div>GSTIN: <span id="pvShopGstin"></span></div>
+    </div>
+  </div>
+  <div class="inv-box" style="margin-bottom:10px;">
+    <strong>Bill To:</strong> <span id="pvCustName"></span> &nbsp; | &nbsp; Village: <span id="pvCustVillage"></span> &nbsp; | &nbsp; Mobile: <span id="pvCustMobile"></span>
+    <span id="pvCustGstinWrap"> &nbsp; | &nbsp; GSTIN: <span id="pvCustGstin"></span></span>
+  </div>
+  <table style="width:100%;border-collapse:collapse;" border="1" cellpadding="5">
+    <thead style="background:#EEF3EA;">
+      <tr><th>#</th><th>Item</th><th>HSN</th><th>Qty</th><th>Unit</th><th>Rate</th><th>Taxable</th><th id="pvTaxCol1">CGST</th><th id="pvTaxCol2">SGST</th><th>Total</th></tr>
+    </thead>
+    <tbody id="pvItemsBody"></tbody>
+  </table>
+  <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+    <div class="inv-box" style="width:280px;">
+      <div class="line" style="display:flex;justify-content:space-between;"><span>Taxable</span><span id="pvTaxable"></span></div>
+      <div class="line" id="pvCgstLine" style="display:flex;justify-content:space-between;"><span>CGST</span><span id="pvCgst"></span></div>
+      <div class="line" id="pvSgstLine" style="display:flex;justify-content:space-between;"><span>SGST</span><span id="pvSgst"></span></div>
+      <div class="line" id="pvIgstLine" style="display:flex;justify-content:space-between;"><span>IGST</span><span id="pvIgst"></span></div>
+      <div style="display:flex;justify-content:space-between;font-weight:700;border-top:1px solid #999;margin-top:4px;padding-top:4px;"><span>Grand Total</span><span id="pvGrand"></span></div>
+    </div>
+  </div>
+  <div class="inv-meta" style="margin-top:6px;"><strong>Amount in words:</strong> <span id="pvWords"></span></div>
+  <div class="inv-box" style="margin-top:10px;display:flex;justify-content:space-between;">
+    <div>
+      Bank: <span id="pvBank"></span> | A/c: <span id="pvAcc"></span> | IFSC: <span id="pvIfsc"></span>
+    </div>
+    <div>For <span id="pvShopName2"></span><br><br>Authorised Signatory</div>
+  </div>
+  <div class="small-muted" style="margin-top:8px;">This is a computer generated invoice.</div>
+</div>
+
+<div id="printStatement" style="display:none;">
+  <div class="inv-head">
+    <div>
+      <h2 id="stShopName">Swaraj Krushi Seva Kendra</h2>
+      <div class="inv-meta" id="stShopAddr"></div>
+    </div>
+    <div class="inv-meta right">
+      <div><strong>CUSTOMER STATEMENT</strong></div>
+      <div>As on: <span id="stAsOn"></span></div>
+    </div>
+  </div>
+  <div class="inv-box" style="margin-bottom:10px;">
+    <strong>Customer:</strong> <span id="stCustName"></span> &nbsp;|&nbsp; Village: <span id="stCustVillage"></span> &nbsp;|&nbsp; Mobile: <span id="stCustMobile"></span>
+  </div>
+  <table style="width:100%;border-collapse:collapse;" border="1" cellpadding="5">
+    <thead style="background:#EEF3EA;">
+      <tr><th>Date</th><th>Particulars</th><th>Ref#</th><th>Debit (Billed)</th><th>Credit (Paid)</th><th>Balance</th></tr>
+    </thead>
+    <tbody id="stBody"></tbody>
+  </table>
+  <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+    <div class="inv-box" style="width:300px;font-weight:700;">
+      <div style="display:flex;justify-content:space-between;"><span id="stFinalLabel">Total Outstanding</span><span id="stFinalAmt"></span></div>
+    </div>
+  </div>
+  <div class="small-muted" style="margin-top:8px;">This is a computer generated statement.</div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+let DATA = { products:[], customers:[], sales:[], purchases:[], settings:[] };
+let SETTINGS = {};
+let saleItems = [];
+let purchItems = [];
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.display='block';
+  setTimeout(()=>t.style.display='none', 2500);
+}
+
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxABPF7GDpHX3j3iXVI87pP3Hi4gsMofVxHOc7rVW7cqVcB__ppZcQ7XGjrgMG9ecuwHg/exec';
+
+function getUrl(){ return SCRIPT_URL; }
+function setUrl(u){ /* URL is hardcoded in code, no-op */ }
+
+async function api(action, data){
+  const url = getUrl();
+  if(!url){ toast('⚠️ Set Apps Script URL in Settings first'); throw new Error('no url'); }
+  const params = new URLSearchParams({ action, data: JSON.stringify(data||{}) });
+  const res = await fetch(url + '?' + params.toString());
+  const json = await res.json();
+  if(json.error){ toast('Error: '+json.error); throw new Error(json.error); }
+  return json;
+}
+
+async function loadAll(){
+  try{
+    const d = await api('getAll', {});
+    DATA = d;
+    SETTINGS = {};
+    (d.settings||[]).forEach(s => SETTINGS[s.Key] = s.Value);
+    applySettings();
+    renderProductDatalists();
+    renderCustList();
+    renderProdTable();
+    renderCustTable();
+    renderRegister();
+    renderPurchHist();
+    toast('Data loaded ✅');
+  }catch(e){ console.error(e); }
+}
+
+function applySettings(){
+  document.getElementById('hdrAddr').textContent = (SETTINGS.Address||'') + (SETTINGS.Village? ', '+SETTINGS.Village:'');
+  document.getElementById('hdrGst').textContent = 'GSTIN: ' + (SETTINGS.GSTIN||'—');
+  document.getElementById('setShopName').value = SETTINGS.ShopName||'';
+  document.getElementById('setGstin').value = SETTINGS.GSTIN||'';
+  document.getElementById('setAddress').value = SETTINGS.Address||'';
+  document.getElementById('setVillage').value = SETTINGS.Village||'';
+  document.getElementById('setState').value = SETTINGS.State||'';
+  document.getElementById('setStateCode').value = SETTINGS.StateCode||'';
+  document.getElementById('setMobile').value = SETTINGS.Mobile||'';
+  document.getElementById('setLicFert').value = SETTINGS.LicenseFert||'';
+  document.getElementById('setLicSeed').value = SETTINGS.LicenseSeed||'';
+  document.getElementById('setLicPest').value = SETTINGS.LicensePest||'';
+  document.getElementById('setBankName').value = SETTINGS.BankName||'';
+  document.getElementById('setBankAcc').value = SETTINGS.BankAccount||'';
+  document.getElementById('setIfsc').value = SETTINGS.IFSC||'';
+}
+
+/* ---------- NAV ---------- */
+document.getElementById('navBar').addEventListener('click', e=>{
+  if(e.target.tagName!=='BUTTON') return;
+  document.querySelectorAll('#navBar button').forEach(b=>b.classList.remove('active'));
+  e.target.classList.add('active');
+  document.querySelectorAll('main section').forEach(s=>s.classList.add('hidden'));
+  document.getElementById('tab-'+e.target.dataset.tab).classList.remove('hidden');
+});
+
+/* ---------- SALE ROWS ---------- */
+function addSaleRow(){
+  const idx = saleItems.length;
+  saleItems.push({ prodId:'', name:'', hsn:'', gst:0, qty:1, unit:'', rate:0 });
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input list="prodList" data-i="${idx}" class="rowProd" placeholder="Type product..."></td>
+    <td><span class="rowHsn">-</span></td>
+    <td><span class="rowGstPct">0</span>%</td>
+    <td><input type="number" class="rowQty" value="1" min="0" step="0.01"></td>
+    <td><span class="rowUnit">-</span></td>
+    <td><input type="number" class="rowRate" value="0" step="0.01"></td>
+    <td class="rowTaxable">0.00</td>
+    <td class="rowTax">0.00</td>
+    <td class="rowTotal">0.00</td>
+    <td><button class="btn danger sm rowDel">✕</button></td>
+  `;
+  document.querySelector('#saleTable tbody').appendChild(tr);
+  wireSaleRow(tr, idx);
+}
+
+function ensureProdDatalist(){
+  if(!document.getElementById('prodList')){
+    const dl = document.createElement('datalist');
+    dl.id = 'prodList';
+    document.body.appendChild(dl);
+  }
+}
+
+function renderProductDatalists(){
+  ensureProdDatalist();
+  const dl = document.getElementById('prodList');
+  dl.innerHTML = DATA.products.map(p=>`<option value="${p.Name}">`).join('');
+}
+
+function findProductByName(name){
+  return DATA.products.find(p=>p.Name.toLowerCase()===String(name).toLowerCase());
+}
+
+function wireSaleRow(tr, idx){
+  const prodInput = tr.querySelector('.rowProd');
+  const qtyInput = tr.querySelector('.rowQty');
+  const rateInput = tr.querySelector('.rowRate');
+
+  prodInput.addEventListener('change', ()=>{
+    const p = findProductByName(prodInput.value);
+    if(p){
+      saleItems[idx].prodId = p.ID;
+      saleItems[idx].name = p.Name;
+      saleItems[idx].hsn = p.HSN;
+      saleItems[idx].gst = Number(p.GSTRate)||0;
+      saleItems[idx].unit = p.Unit;
+      saleItems[idx].rate = Number(p.SaleRate)||0;
+      tr.querySelector('.rowHsn').textContent = p.HSN||'-';
+      tr.querySelector('.rowGstPct').textContent = p.GSTRate||0;
+      tr.querySelector('.rowUnit').textContent = p.Unit||'-';
+      rateInput.value = p.SaleRate||0;
+    }
+    recalcSaleRow(idx, tr);
+  });
+  qtyInput.addEventListener('input', ()=>{ saleItems[idx].qty = Number(qtyInput.value)||0; recalcSaleRow(idx, tr); });
+  rateInput.addEventListener('input', ()=>{ saleItems[idx].rate = Number(rateInput.value)||0; recalcSaleRow(idx, tr); });
+  tr.querySelector('.rowDel').addEventListener('click', ()=>{
+    saleItems[idx] = null;
+    tr.remove();
+    recalcSaleTotals();
+  });
+}
+
+function recalcSaleRow(idx, tr){
+  const it = saleItems[idx];
+  if(!it) return;
+  const taxable = it.qty * it.rate;
+  const tax = taxable * it.gst / 100;
+  const total = taxable + tax;
+  tr.querySelector('.rowTaxable').textContent = taxable.toFixed(2);
+  tr.querySelector('.rowTax').textContent = tax.toFixed(2);
+  tr.querySelector('.rowTotal').textContent = total.toFixed(2);
+  recalcSaleTotals();
+}
+
+function recalcSaleTotals(){
+  let taxable=0, tax=0;
+  saleItems.forEach(it=>{ if(!it) return; const t = it.qty*it.rate; taxable+=t; tax += t*it.gst/100; });
+  const taxType = document.getElementById('taxType').value;
+  let cgst=0, sgst=0, igst=0;
+  if(taxType==='IGST'){ igst = tax; } else { cgst = tax/2; sgst = tax/2; }
+  const grand = taxable + tax;
+  document.getElementById('tTaxable').textContent = '₹'+taxable.toFixed(2);
+  document.getElementById('tCgst').textContent = '₹'+cgst.toFixed(2);
+  document.getElementById('tSgst').textContent = '₹'+sgst.toFixed(2);
+  document.getElementById('tIgst').textContent = '₹'+igst.toFixed(2);
+  document.getElementById('tGrand').textContent = '₹'+grand.toFixed(2);
+  document.getElementById('tCgstRow').style.display = taxType==='IGST' ? 'none':'flex';
+  document.getElementById('tSgstRow').style.display = taxType==='IGST' ? 'none':'flex';
+  document.getElementById('tIgstRow').style.display = taxType==='IGST' ? 'flex':'none';
+  recalcBalance();
+}
+
+function recalcBalance(){
+  const grandText = document.getElementById('tGrand').textContent.replace('₹','');
+  const grand = Number(grandText)||0;
+  const received = Number(document.getElementById('amountReceived').value)||0;
+  const bal = Math.max(grand - received, 0);
+  document.getElementById('tBalance').textContent = '₹'+bal.toFixed(2);
+}
+
+document.getElementById('addRowBtn').addEventListener('click', addSaleRow);
+document.getElementById('taxType').addEventListener('change', recalcSaleTotals);
+document.getElementById('amountReceived').addEventListener('input', recalcBalance);
+
+/* Auto-detect tax type from customer GSTIN */
+document.getElementById('cGstin').addEventListener('input', e=>{
+  const g = e.target.value.trim();
+  if(g.length>=2){
+    const code = g.substring(0,2);
+    document.getElementById('taxType').value = (code === (SETTINGS.StateCode||'27')) ? 'CGST_SGST' : 'IGST';
+    recalcSaleTotals();
+  }
+});
+
+/* customer search/autofill */
+function renderCustList(){
+  const dl = document.getElementById('custList');
+  dl.innerHTML = DATA.customers.map(c=>`<option value="${c.Name}">${c.Name} - ${c.Mobile}</option>`).join('');
+}
+document.getElementById('custSearch').addEventListener('change', e=>{
+  const c = DATA.customers.find(c=>c.Name===e.target.value);
+  if(c){
+    document.getElementById('cName').value = c.Name;
+    document.getElementById('cVillage').value = c.Village;
+    document.getElementById('cMobile').value = c.Mobile;
+    document.getElementById('cGstin').value = c.GSTIN||'';
+    document.getElementById('cType').value = c.Type||'Farmer';
+    document.getElementById('cGstin').dispatchEvent(new Event('input'));
+  }
+});
+
+document.getElementById('saveCustBtn').addEventListener('click', async ()=>{
+  const c = {
+    Name: document.getElementById('cName').value,
+    Village: document.getElementById('cVillage').value,
+    Mobile: document.getElementById('cMobile').value,
+    GSTIN: document.getElementById('cGstin').value,
+    Type: document.getElementById('cType').value
+  };
+  if(!c.Name){ toast('Enter customer name'); return; }
+  const r = await api('saveCustomer', c);
+  toast('Customer saved');
+  await loadAll();
+});
+
+document.getElementById('clearSaleBtn').addEventListener('click', ()=>resetSaleForm());
+function resetSaleForm(){
+  saleItems = [];
+  document.querySelector('#saleTable tbody').innerHTML='';
+  ['cName','cVillage','cMobile','cGstin','custSearch'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('cType').value='Farmer';
+  document.getElementById('taxType').value='CGST_SGST';
+  document.getElementById('amountReceived').value=0;
+  recalcSaleTotals();
+  addSaleRow();
+}
+
+document.getElementById('saveSaleBtn').addEventListener('click', async ()=>{
+  const items = saleItems.filter(Boolean).filter(it=>it.prodId && it.qty>0);
+  if(items.length===0){ toast('Add at least one item'); return; }
+  let taxable=0, tax=0;
+  items.forEach(it=>{ const t=it.qty*it.rate; taxable+=t; tax+=t*it.gst/100; });
+  const taxType = document.getElementById('taxType').value;
+  const cgst = taxType==='IGST'?0:tax/2;
+  const sgst = taxType==='IGST'?0:tax/2;
+  const igst = taxType==='IGST'?tax:0;
+  const total = taxable+tax;
+  const payload = {
+    date: document.getElementById('saleDate').value || new Date().toISOString().substring(0,10),
+    customerId:'', customerName: document.getElementById('cName').value,
+    village: document.getElementById('cVillage').value,
+    mobile: document.getElementById('cMobile').value,
+    gstin: document.getElementById('cGstin').value,
+    items: items.map(it=>({prodId:it.prodId,name:it.name,hsn:it.hsn,gst:it.gst,qty:it.qty,unit:it.unit,rate:it.rate})),
+    taxable, cgst, sgst, igst, total, taxType,
+    paidAmount: Number(document.getElementById('amountReceived').value)||0
+  };
+  const r = await api('saveSale', payload);
+  toast('Bill #'+r.billNo+' saved');
+  printBill(payload, r.billNo);
+  await loadAll();
+  resetSaleForm();
+});
+
+/* ---------- PRINT BILL ---------- */
+function numToWords(num){
+  // Indian numbering, simple implementation
+  const a = ['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+  const b = ['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+  num = Math.round(num);
+  if(num===0) return 'Zero';
+  function inWords(n){
+    if(n<20) return a[n];
+    if(n<100) return b[Math.floor(n/10)] + (n%10? ' '+a[n%10]:'');
+    if(n<1000) return a[Math.floor(n/100)]+' Hundred' + (n%100? ' '+inWords(n%100):'');
+    return '';
+  }
+  let str = '';
+  const crore = Math.floor(num/10000000); num%=10000000;
+  const lakh = Math.floor(num/100000); num%=100000;
+  const thousand = Math.floor(num/1000); num%=1000;
+  if(crore) str += inWords(crore)+' Crore ';
+  if(lakh) str += inWords(lakh)+' Lakh ';
+  if(thousand) str += inWords(thousand)+' Thousand ';
+  if(num) str += inWords(num);
+  return str.trim()+' Rupees Only';
+}
+
+function printBill(sale, billNo){
+  document.getElementById('pvShopName').textContent = SETTINGS.ShopName||'Swaraj Krushi Seva Kendra';
+  document.getElementById('pvShopName2').textContent = SETTINGS.ShopName||'Swaraj Krushi Seva Kendra';
+  document.getElementById('pvShopAddr').textContent = (SETTINGS.Address||'') + ', ' + (SETTINGS.Village||'') + ', ' + (SETTINGS.State||'');
+  document.getElementById('pvShopLic').textContent = ['LicenseFert','LicenseSeed','LicensePest'].map(k=>SETTINGS[k]).filter(Boolean).join(' | ');
+  document.getElementById('pvShopGstin').textContent = SETTINGS.GSTIN||'';
+  document.getElementById('pvBillNo').textContent = billNo;
+  document.getElementById('pvDate').textContent = sale.date;
+  document.getElementById('pvCustName').textContent = sale.customerName;
+  document.getElementById('pvCustVillage').textContent = sale.village;
+  document.getElementById('pvCustMobile').textContent = sale.mobile;
+  document.getElementById('pvCustGstinWrap').style.display = sale.gstin ? 'inline':'none';
+  document.getElementById('pvCustGstin').textContent = sale.gstin||'';
+
+  const isIgst = sale.taxType==='IGST';
+  document.getElementById('pvTaxCol1').textContent = isIgst ? 'IGST' : 'CGST';
+  document.getElementById('pvTaxCol2').textContent = isIgst ? '' : 'SGST';
+  document.getElementById('pvCgstLine').style.display = isIgst?'none':'flex';
+  document.getElementById('pvSgstLine').style.display = isIgst?'none':'flex';
+  document.getElementById('pvIgstLine').style.display = isIgst?'flex':'none';
+
+  document.getElementById('pvItemsBody').innerHTML = sale.items.map((it,i)=>{
+    const taxableAmt = it.qty*it.rate;
+    const taxAmt = taxableAmt*it.gst/100;
+    const total = taxableAmt+taxAmt;
+    const half = (taxAmt/2).toFixed(2);
+    return `<tr><td>${i+1}</td><td>${it.name}</td><td>${it.hsn||''}</td><td>${it.qty}</td><td>${it.unit||''}</td><td>${it.rate.toFixed(2)}</td><td>${taxableAmt.toFixed(2)}</td><td>${isIgst?taxAmt.toFixed(2):half}</td><td>${isIgst?'':half}</td><td>${total.toFixed(2)}</td></tr>`;
+  }).join('');
+
+  document.getElementById('pvTaxable').textContent = '₹'+sale.taxable.toFixed(2);
+  document.getElementById('pvCgst').textContent = '₹'+sale.cgst.toFixed(2);
+  document.getElementById('pvSgst').textContent = '₹'+sale.sgst.toFixed(2);
+  document.getElementById('pvIgst').textContent = '₹'+sale.igst.toFixed(2);
+  document.getElementById('pvGrand').textContent = '₹'+sale.total.toFixed(2);
+  document.getElementById('pvWords').textContent = numToWords(sale.total);
+  document.getElementById('pvBank').textContent = SETTINGS.BankName||'';
+  document.getElementById('pvAcc').textContent = SETTINGS.BankAccount||'';
+  document.getElementById('pvIfsc').textContent = SETTINGS.IFSC||'';
+
+  setTimeout(()=>window.print(), 200);
+}
+
+/* ---------- SALES REGISTER ---------- */
+function renderRegister(){
+  const tbody = document.querySelector('#regTable tbody');
+  const search = (document.getElementById('regSearch').value||'').toLowerCase();
+  const from = document.getElementById('regFrom').value;
+  const to = document.getElementById('regTo').value;
+  let rows = DATA.sales.slice().sort((a,b)=> Number(b.BillNo)-Number(a.BillNo));
+  rows = rows.filter(s=>{
+    if(search && !(String(s.BillNo).includes(search) || (s.CustomerName||'').toLowerCase().includes(search) || (s.Village||'').toLowerCase().includes(search))) return false;
+    if(from && s.Date < from) return false;
+    if(to && s.Date > to) return false;
+    return true;
+  });
+  tbody.innerHTML = rows.map(s=>{
+    const tax = Number(s.CGST||0)+Number(s.SGST||0)+Number(s.IGST||0);
+    const status = s.Cancelled==='Cancelled' ? '<span class="pill cancelled">Cancelled</span>' : '<span class="pill active">Active</span>';
+    const cancelBtn = s.Cancelled==='Cancelled' ? '' : `<button class="btn danger sm cancelSaleBtn" data-id="${s.ID}">Cancel</button>`;
+    const printBtn = `<button class="btn outline sm reprintBtn" data-id="${s.ID}">Print</button>`;
+    return `<tr><td>${s.BillNo}</td><td>${s.Date}</td><td>${s.CustomerName}</td><td>${s.Village}</td><td>${Number(s.Taxable).toFixed(2)}</td><td>${tax.toFixed(2)}</td><td>${Number(s.Total).toFixed(2)}</td><td>${status}</td><td>${printBtn} ${cancelBtn}</td></tr>`;
+  }).join('');
+
+  tbody.querySelectorAll('.cancelSaleBtn').forEach(b=>b.addEventListener('click', async ()=>{
+    if(!confirm('Cancel this bill? Stock will be restored.')) return;
+    await api('cancelSale', { ID: b.dataset.id, reason:'Cancelled by user' });
+    toast('Bill cancelled');
+    await loadAll();
+  }));
+  tbody.querySelectorAll('.reprintBtn').forEach(b=>b.addEventListener('click', ()=>{
+    const s = DATA.sales.find(x=>String(x.ID)===String(b.dataset.id));
+    if(s){
+      const items = JSON.parse(s.ItemsJSON||'[]');
+      printBill({
+        date:s.Date, customerName:s.CustomerName, village:s.Village, mobile:s.Mobile, gstin:s.GSTIN,
+        items, taxable:Number(s.Taxable), cgst:Number(s.CGST), sgst:Number(s.SGST), igst:Number(s.IGST),
+        total:Number(s.Total), taxType:s.TaxType
+      }, s.BillNo);
+    }
+  }));
+}
+document.getElementById('regFilterBtn').addEventListener('click', renderRegister);
+document.getElementById('regSearch').addEventListener('input', renderRegister);
+
+/* ---------- PURCHASE ---------- */
+function addPurchRow(){
+  const idx = purchItems.length;
+  purchItems.push({ prodId:'', name:'', gst:0, qty:1, unit:'', rate:0 });
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input list="prodList" class="prRowProd" placeholder="Type product..."></td>
+    <td><span class="prRowGst">0</span>%</td>
+    <td><input type="number" class="prRowQty" value="1" step="0.01"></td>
+    <td><span class="prRowUnit">-</span></td>
+    <td><input type="number" class="prRowRate" value="0" step="0.01"></td>
+    <td class="prRowTaxable">0.00</td>
+    <td class="prRowGstAmt">0.00</td>
+    <td class="prRowTotal">0.00</td>
+    <td><button class="btn danger sm prRowDel">✕</button></td>
+  `;
+  document.querySelector('#purchTable tbody').appendChild(tr);
+  wirePurchRow(tr, idx);
+}
+
+function wirePurchRow(tr, idx){
+  const prodInput = tr.querySelector('.prRowProd');
+  const qtyInput = tr.querySelector('.prRowQty');
+  const rateInput = tr.querySelector('.prRowRate');
+  prodInput.addEventListener('change', ()=>{
+    const p = findProductByName(prodInput.value);
+    if(p){
+      purchItems[idx].prodId=p.ID; purchItems[idx].name=p.Name; purchItems[idx].gst=Number(p.GSTRate)||0;
+      purchItems[idx].unit=p.Unit; purchItems[idx].rate=Number(p.PurchaseRate)||0;
+      tr.querySelector('.prRowGst').textContent = p.GSTRate||0;
+      tr.querySelector('.prRowUnit').textContent = p.Unit||'-';
+      rateInput.value = p.PurchaseRate||0;
+    }
+    recalcPurchRow(idx, tr);
+  });
+  qtyInput.addEventListener('input', ()=>{ purchItems[idx].qty=Number(qtyInput.value)||0; recalcPurchRow(idx, tr); });
+  rateInput.addEventListener('input', ()=>{ purchItems[idx].rate=Number(rateInput.value)||0; recalcPurchRow(idx, tr); });
+  tr.querySelector('.prRowDel').addEventListener('click', ()=>{ purchItems[idx]=null; tr.remove(); recalcPurchTotals(); });
+}
+
+function recalcPurchRow(idx, tr){
+  const it = purchItems[idx]; if(!it) return;
+  const taxable = it.qty*it.rate;
+  const gstAmt = taxable*it.gst/100;
+  tr.querySelector('.prRowTaxable').textContent = taxable.toFixed(2);
+  tr.querySelector('.prRowGstAmt').textContent = gstAmt.toFixed(2);
+  tr.querySelector('.prRowTotal').textContent = (taxable+gstAmt).toFixed(2);
+  recalcPurchTotals();
+}
+function recalcPurchTotals(){
+  let taxable=0, gst=0;
+  purchItems.forEach(it=>{ if(!it) return; const t=it.qty*it.rate; taxable+=t; gst+=t*it.gst/100; });
+  document.getElementById('pTaxable').textContent='₹'+taxable.toFixed(2);
+  document.getElementById('pGst').textContent='₹'+gst.toFixed(2);
+  document.getElementById('pGrand').textContent='₹'+(taxable+gst).toFixed(2);
+}
+document.getElementById('addPurchRowBtn').addEventListener('click', addPurchRow);
+
+document.getElementById('savePurchBtn').addEventListener('click', async ()=>{
+  const items = purchItems.filter(Boolean).filter(it=>it.prodId && it.qty>0);
+  if(items.length===0){ toast('Add at least one item'); return; }
+  let taxable=0, gst=0;
+  items.forEach(it=>{ const t=it.qty*it.rate; taxable+=t; gst+=t*it.gst/100; });
+  const payload = {
+    date: document.getElementById('pDate').value || new Date().toISOString().substring(0,10),
+    invoiceNo: document.getElementById('pInvoiceNo').value,
+    supplier: document.getElementById('pSupplier').value,
+    items: items.map(it=>({prodId:it.prodId,name:it.name,gst:it.gst,qty:it.qty,unit:it.unit,rate:it.rate})),
+    taxable, gstAmt: gst, total: taxable+gst
+  };
+  await api('savePurchase', payload);
+  toast('Purchase saved, stock updated');
+  purchItems=[]; document.querySelector('#purchTable tbody').innerHTML='';
+  ['pSupplier','pInvoiceNo'].forEach(id=>document.getElementById(id).value='');
+  recalcPurchTotals();
+  addPurchRow();
+  await loadAll();
+});
+
+function renderPurchHist(){
+  const tbody = document.querySelector('#purchHistTable tbody');
+  const rows = DATA.purchases.slice().sort((a,b)=>Number(b.ID)-Number(a.ID)).slice(0,30);
+  tbody.innerHTML = rows.map(p=>`<tr><td>${p.Date}</td><td>${p.InvoiceNo}</td><td>${p.Supplier}</td><td>${Number(p.Taxable).toFixed(2)}</td><td>${Number(p.GSTAmt).toFixed(2)}</td><td>${Number(p.Total).toFixed(2)}</td></tr>`).join('');
+}
+
+/* ---------- PRODUCTS ---------- */
+document.getElementById('saveProdBtn').addEventListener('click', async ()=>{
+  const p = {
+    ID: document.getElementById('prId').value || undefined,
+    Name: document.getElementById('prName').value,
+    HSN: document.getElementById('prHsn').value,
+    Unit: document.getElementById('prUnit').value,
+    GSTRate: Number(document.getElementById('prGst').value)||0,
+    PurchaseRate: Number(document.getElementById('prPRate').value)||0,
+    SaleRate: Number(document.getElementById('prSRate').value)||0,
+    Stock: Number(document.getElementById('prStock').value)||0,
+    Category: document.getElementById('prCat').value
+  };
+  if(!p.Name){ toast('Enter product name'); return; }
+  await api('saveProduct', p);
+  toast('Product saved');
+  clearProdForm();
+  await loadAll();
+});
+function clearProdForm(){
+  ['prId','prName','prHsn','prUnit','prPRate','prSRate','prCat'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('prGst').value=5;
+  document.getElementById('prStock').value=0;
+}
+document.getElementById('clearProdBtn').addEventListener('click', clearProdForm);
+
+function renderProdTable(){
+  const tbody = document.querySelector('#prodTable tbody');
+  const search = (document.getElementById('prodSearch').value||'').toLowerCase();
+  let rows = DATA.products.filter(p=>!search || p.Name.toLowerCase().includes(search) || (p.Category||'').toLowerCase().includes(search));
+  tbody.innerHTML = rows.map(p=>{
+    const low = Number(p.Stock) <= 5;
+    return `<tr>
+      <td>${p.Name}</td><td>${p.Category||''}</td><td>${p.HSN||''}</td><td>${p.GSTRate}</td><td>${p.Unit||''}</td>
+      <td>${Number(p.PurchaseRate).toFixed(2)}</td><td>${Number(p.SaleRate).toFixed(2)}</td>
+      <td>${p.Stock} ${low?'<span class="pill low">Low</span>':''}</td>
+      <td><button class="btn outline sm editProdBtn" data-id="${p.ID}">Edit</button> <button class="btn danger sm delProdBtn" data-id="${p.ID}">Del</button></td>
+    </tr>`;
+  }).join('');
+  tbody.querySelectorAll('.editProdBtn').forEach(b=>b.addEventListener('click', ()=>{
+    const p = DATA.products.find(x=>String(x.ID)===String(b.dataset.id));
+    if(!p) return;
+    document.getElementById('prId').value=p.ID;
+    document.getElementById('prName').value=p.Name;
+    document.getElementById('prHsn').value=p.HSN;
+    document.getElementById('prUnit').value=p.Unit;
+    document.getElementById('prGst').value=p.GSTRate;
+    document.getElementById('prPRate').value=p.PurchaseRate;
+    document.getElementById('prSRate').value=p.SaleRate;
+    document.getElementById('prStock').value=p.Stock;
+    document.getElementById('prCat').value=p.Category;
+    document.querySelector('[data-tab="stock"]').click();
+  }));
+  tbody.querySelectorAll('.delProdBtn').forEach(b=>b.addEventListener('click', async ()=>{
+    if(!confirm('Delete this product?')) return;
+    await api('deleteProduct', { ID: b.dataset.id });
+    toast('Deleted');
+    await loadAll();
+  }));
+}
+document.getElementById('prodSearch').addEventListener('input', renderProdTable);
+
+/* ---------- CUSTOMERS TABLE ---------- */
+function customerOutstanding(name){
+  let billed=0, received=0;
+  DATA.sales.forEach(s=>{
+    if(s.CustomerName===name && s.Cancelled!=='Cancelled'){
+      billed += Number(s.Total)||0;
+      received += Number(s.PaidAmount)||0;
+    }
+  });
+  (DATA.receipts||[]).forEach(r=>{
+    if(r.CustomerName===name) received += Number(r.Amount)||0;
+  });
+  return { billed, received, outstanding: billed-received };
+}
+
+function renderCustTable(){
+  const tbody = document.querySelector('#custTable tbody');
+  const search = (document.getElementById('custTableSearch').value||'').toLowerCase();
+  let rows = DATA.customers.filter(c=>!search || c.Name.toLowerCase().includes(search) || (c.Mobile||'').includes(search) || (c.Village||'').toLowerCase().includes(search));
+  tbody.innerHTML = rows.map(c=>{
+    const o = customerOutstanding(c.Name);
+    const outClass = o.outstanding>0 ? 'style="color:var(--danger);font-weight:700;"' : (o.outstanding<0 ? 'style="color:var(--green);font-weight:700;"' : '');
+    return `<tr><td>${c.Name}</td><td>${c.Village||''}</td><td>${c.Mobile||''}</td><td>${c.GSTIN||''}</td><td>${c.Type||''}</td><td>₹${o.billed.toFixed(2)}</td><td>₹${o.received.toFixed(2)}</td><td ${outClass}>₹${o.outstanding.toFixed(2)}${o.outstanding<0?' (Advance)':''}</td><td><button class="btn outline sm stmtBtn" data-name="${c.Name}">Statement</button></td></tr>`;
+  }).join('');
+  tbody.querySelectorAll('.stmtBtn').forEach(b=>b.addEventListener('click', ()=>printStatement(b.dataset.name)));
+}
+document.getElementById('custTableSearch').addEventListener('input', renderCustTable);
+
+document.getElementById('saveRecvBtn').addEventListener('click', async ()=>{
+  const name = document.getElementById('recvCust').value.trim();
+  const amt = Number(document.getElementById('recvAmt').value)||0;
+  if(!name || amt<=0){ toast('Enter customer name and amount'); return; }
+  const cust = DATA.customers.find(c=>c.Name===name);
+  await api('saveReceipt', { customerId: cust?cust.ID:'', customerName: name, amount: amt, mode: document.getElementById('recvMode').value });
+  toast('Receipt saved');
+  document.getElementById('recvCust').value=''; document.getElementById('recvAmt').value='';
+  await loadAll();
+});
+
+document.getElementById('loadDemoBtn').addEventListener('click', async ()=>{
+  if(!confirm('Load 24 demo fertilizer/seed/pesticide products?')) return;
+  await api('seedDemoProducts', {});
+  toast('Demo products added');
+  await loadAll();
+});
+
+document.getElementById('loadFullDemoBtn').addEventListener('click', async ()=>{
+  if(!confirm('Load full demo data — products, customers, purchase, sales and receipts? Best used on an empty/fresh sheet.')) return;
+  toast('Loading demo data...');
+  const r = await api('seedDemoData', {});
+  toast(r.message || 'Demo data loaded');
+  await loadAll();
+});
+
+/* ---------- SETTINGS ---------- */
+document.getElementById('saveSettingsBtn').addEventListener('click', async ()=>{
+  const s = {
+    ShopName: document.getElementById('setShopName').value,
+    GSTIN: document.getElementById('setGstin').value,
+    Address: document.getElementById('setAddress').value,
+    Village: document.getElementById('setVillage').value,
+    State: document.getElementById('setState').value,
+    StateCode: document.getElementById('setStateCode').value,
+    Mobile: document.getElementById('setMobile').value,
+    LicenseFert: document.getElementById('setLicFert').value,
+    LicenseSeed: document.getElementById('setLicSeed').value,
+    LicensePest: document.getElementById('setLicPest').value,
+    BankName: document.getElementById('setBankName').value,
+    BankAccount: document.getElementById('setBankAcc').value,
+    IFSC: document.getElementById('setIfsc').value
+  };
+  await api('saveSettings', s);
+  toast('Settings saved');
+  await loadAll();
+});
+
+/* ---------- CUSTOMER STATEMENT ---------- */
+function printStatement(customerName){
+  const cust = DATA.customers.find(c=>c.Name===customerName) || {};
+  const txns = [];
+  DATA.sales.forEach(s=>{
+    if(s.CustomerName===customerName && s.Cancelled!=='Cancelled'){
+      txns.push({ date:s.Date, particulars:'Sale - Bill #'+s.BillNo, ref:s.BillNo, debit:Number(s.Total)||0, credit:0 });
+      if(Number(s.PaidAmount)>0) txns.push({ date:s.Date, particulars:'Paid at billing', ref:s.BillNo, debit:0, credit:Number(s.PaidAmount) });
+    }
+  });
+  (DATA.receipts||[]).forEach(r=>{
+    if(r.CustomerName===customerName) txns.push({ date:r.Date, particulars:'Payment Received ('+(r.Mode||'Cash')+')', ref:r.ID, debit:0, credit:Number(r.Amount)||0 });
+  });
+  txns.sort((a,b)=> new Date(a.date) - new Date(b.date));
+
+  let bal = 0;
+  const rows = txns.map(t=>{
+    bal += t.debit - t.credit;
+    return `<tr><td>${t.date}</td><td>${t.particulars}</td><td>${t.ref}</td><td>${t.debit?t.debit.toFixed(2):''}</td><td>${t.credit?t.credit.toFixed(2):''}</td><td>${bal.toFixed(2)}</td></tr>`;
+  }).join('');
+
+  document.getElementById('stShopName').textContent = SETTINGS.ShopName||'Swaraj Krushi Seva Kendra';
+  document.getElementById('stShopAddr').textContent = (SETTINGS.Address||'') + ', ' + (SETTINGS.Village||'') + ', ' + (SETTINGS.State||'');
+  document.getElementById('stAsOn').textContent = new Date().toISOString().substring(0,10);
+  document.getElementById('stCustName').textContent = customerName;
+  document.getElementById('stCustVillage').textContent = cust.Village||'';
+  document.getElementById('stCustMobile').textContent = cust.Mobile||'';
+  document.getElementById('stBody').innerHTML = rows || '<tr><td colspan="6" style="text-align:center;color:#888;">No transactions</td></tr>';
+  document.getElementById('stFinalLabel').textContent = bal>=0 ? 'Total Outstanding (Due from customer)' : 'Advance with us';
+  document.getElementById('stFinalAmt').textContent = '₹'+Math.abs(bal).toFixed(2);
+
+  document.body.classList.add('printing-statement');
+  setTimeout(()=>{ window.print(); setTimeout(()=>document.body.classList.remove('printing-statement'), 500); }, 200);
+}
+
+/* ---------- INIT ---------- */
+window.addEventListener('DOMContentLoaded', ()=>{
+  document.getElementById('saleDate').value = new Date().toISOString().substring(0,10);
+  document.getElementById('pDate').value = new Date().toISOString().substring(0,10);
+  addSaleRow();
+  addPurchRow();
+  loadAll();
+});
+</script>
+</body>
+</html>
