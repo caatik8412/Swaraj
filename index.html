@@ -63,6 +63,36 @@
   .inv-meta{font-size:12px;color:var(--muted);}
   .inv-box{border:1px solid #999;padding:8px;font-size:12px;border-radius:4px;}
   .small-muted{font-size:11px;color:var(--muted);}
+
+  /* ---------- MOBILE ---------- */
+  @media (max-width: 680px){
+    header{padding:10px 14px;}
+    header h1{font-size:16px;}
+    header .sub{font-size:11px;}
+    #installBtn{font-size:11px;padding:6px 10px;}
+    main{padding:10px 10px 76px;}
+    .card{padding:12px;margin-bottom:12px;}
+    .grid.g2, .grid.g3, .grid.g4{grid-template-columns:1fr 1fr;}
+    table{display:block;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;}
+    table thead, table tbody{display:table;width:100%;}
+    th,td{padding:8px 6px;font-size:12.5px;}
+    input,select{padding:10px;font-size:14px;}
+    .btn{padding:11px 14px;font-size:14px;}
+    .btn.sm{padding:7px 10px;font-size:12px;}
+
+    nav{display:none;}
+    #bottomNav{
+      display:flex;position:fixed;bottom:0;left:0;right:0;background:#fff;
+      border-top:2px solid var(--border);z-index:500;padding:4px 2px env(safe-area-inset-bottom);
+    }
+    #bottomNav button{
+      flex:1;background:none;border:none;display:flex;flex-direction:column;align-items:center;
+      gap:2px;padding:6px 2px;font-size:10.5px;font-weight:600;color:var(--muted);
+    }
+    #bottomNav button .ic{font-size:18px;line-height:1;}
+    #bottomNav button.active{color:var(--green);}
+  }
+  #bottomNav{display:none;}
 </style>
 </head>
 <body>
@@ -85,23 +115,28 @@
   <button data-tab="settings">Settings</button>
 </nav>
 
+<div id="bottomNav">
+  <button data-tab="sale" class="active"><span class="ic">🧾</span>Sale</button>
+  <button data-tab="register"><span class="ic">📒</span>Register</button>
+  <button data-tab="purchase"><span class="ic">📦</span>Purchase</button>
+  <button data-tab="stock"><span class="ic">🏷️</span>Stock</button>
+  <button data-tab="customers"><span class="ic">👥</span>Customers</button>
+  <button data-tab="settings"><span class="ic">⚙️</span>Settings</button>
+</div>
+
 <main>
 
 <!-- ============ NEW SALE ============ -->
 <section id="tab-sale">
   <div class="card">
     <h3>Customer</h3>
-    <div class="grid g4">
+    <div class="grid g3">
       <div><label>Search / Select Customer</label><input id="custSearch" placeholder="Type name or mobile..." list="custList"><datalist id="custList"></datalist></div>
       <div><label>Name</label><input id="cName"></div>
-      <div><label>Village</label><input id="cVillage"></div>
       <div><label>Mobile</label><input id="cMobile"></div>
     </div>
-    <div class="grid g4" style="margin-top:8px;">
-      <div><label>Customer Type</label>
-        <select id="cType"><option value="Farmer">Farmer</option><option value="Dealer">Dealer / Shop</option></select>
-      </div>
-      <div><label>GSTIN (if dealer, optional)</label><input id="cGstin" placeholder="27ABCDE1234F1Z5"></div>
+    <div class="grid g3" style="margin-top:8px;">
+      <div><label>GSTIN (optional, for dealers)</label><input id="cGstin" placeholder="27ABCDE1234F1Z5"></div>
       <div><label>Bill Date</label><input type="date" id="saleDate"></div>
       <div style="display:flex;align-items:flex-end;"><button class="btn outline" id="saveCustBtn" style="width:100%;">💾 Save Customer</button></div>
     </div>
@@ -110,7 +145,7 @@
   <div class="card">
     <h3>Items</h3>
     <table id="saleTable">
-      <thead><tr><th style="width:26%;">Product</th><th>HSN</th><th>GST%</th><th>Qty</th><th>Unit</th><th>Rate</th><th>Taxable</th><th>Tax</th><th>Total</th><th></th></tr></thead>
+      <thead><tr><th style="width:30%;">Product</th><th>GST%</th><th>Qty</th><th>Unit</th><th>Rate</th><th>Taxable</th><th>Tax</th><th>Total</th><th></th></tr></thead>
       <tbody></tbody>
     </table>
     <button class="btn outline sm" id="addRowBtn" style="margin-top:8px;">+ Add Item</button>
@@ -236,7 +271,7 @@
   <div class="card">
     <div class="row search-row"><input id="custTableSearch" placeholder="Search customers..."></div>
     <table id="custTable">
-      <thead><tr><th>Name</th><th>Village</th><th>Mobile</th><th>GSTIN</th><th>Type</th><th>Total Billed</th><th>Received</th><th>Outstanding</th><th></th></tr></thead>
+      <thead><tr><th>Name</th><th>Mobile</th><th>GSTIN</th><th>Total Billed</th><th>Received</th><th>Outstanding</th><th></th></tr></thead>
       <tbody></tbody>
     </table>
   </div>
@@ -295,7 +330,7 @@
     </div>
   </div>
   <div class="inv-box" style="margin-bottom:10px;">
-    <strong>Bill To:</strong> <span id="pvCustName"></span> &nbsp; | &nbsp; Village: <span id="pvCustVillage"></span> &nbsp; | &nbsp; Mobile: <span id="pvCustMobile"></span>
+    <strong>Bill To:</strong> <span id="pvCustName"></span> &nbsp; | &nbsp; Mobile: <span id="pvCustMobile"></span>
     <span id="pvCustGstinWrap"> &nbsp; | &nbsp; GSTIN: <span id="pvCustGstin"></span></span>
   </div>
   <table style="width:100%;border-collapse:collapse;" border="1" cellpadding="5">
@@ -335,7 +370,7 @@
     </div>
   </div>
   <div class="inv-box" style="margin-bottom:10px;">
-    <strong>Customer:</strong> <span id="stCustName"></span> &nbsp;|&nbsp; Village: <span id="stCustVillage"></span> &nbsp;|&nbsp; Mobile: <span id="stCustMobile"></span>
+    <strong>Customer:</strong> <span id="stCustName"></span> &nbsp;|&nbsp; Mobile: <span id="stCustMobile"></span>
   </div>
   <table style="width:100%;border-collapse:collapse;" border="1" cellpadding="5">
     <thead style="background:#EEF3EA;">
@@ -425,12 +460,23 @@ function applySettings(){
 }
 
 /* ---------- NAV ---------- */
-document.getElementById('navBar').addEventListener('click', e=>{
-  if(e.target.tagName!=='BUTTON') return;
-  document.querySelectorAll('#navBar button').forEach(b=>b.classList.remove('active'));
-  e.target.classList.add('active');
+function switchTab(tabName){
+  document.querySelectorAll('#navBar button, #bottomNav button').forEach(b=>{
+    b.classList.toggle('active', b.dataset.tab===tabName);
+  });
   document.querySelectorAll('main section').forEach(s=>s.classList.add('hidden'));
-  document.getElementById('tab-'+e.target.dataset.tab).classList.remove('hidden');
+  document.getElementById('tab-'+tabName).classList.remove('hidden');
+  window.scrollTo({top:0, behavior:'instant'});
+}
+document.getElementById('navBar').addEventListener('click', e=>{
+  const btn = e.target.closest('button');
+  if(!btn) return;
+  switchTab(btn.dataset.tab);
+});
+document.getElementById('bottomNav').addEventListener('click', e=>{
+  const btn = e.target.closest('button');
+  if(!btn) return;
+  switchTab(btn.dataset.tab);
 });
 
 /* ---------- SALE ROWS ---------- */
@@ -440,7 +486,6 @@ function addSaleRow(){
   const tr = document.createElement('tr');
   tr.innerHTML = `
     <td><input list="prodList" data-i="${idx}" class="rowProd" placeholder="Type product..."></td>
-    <td><span class="rowHsn">-</span></td>
     <td><span class="rowGstPct">0</span>%</td>
     <td><input type="number" class="rowQty" value="1" min="0" step="0.01"></td>
     <td><span class="rowUnit">-</span></td>
@@ -486,7 +531,6 @@ function wireSaleRow(tr, idx){
       saleItems[idx].gst = Number(p.GSTRate)||0;
       saleItems[idx].unit = p.Unit;
       saleItems[idx].rate = Number(p.SaleRate)||0;
-      tr.querySelector('.rowHsn').textContent = p.HSN||'-';
       tr.querySelector('.rowGstPct').textContent = p.GSTRate||0;
       tr.querySelector('.rowUnit').textContent = p.Unit||'-';
       rateInput.value = p.SaleRate||0;
@@ -563,21 +607,20 @@ document.getElementById('custSearch').addEventListener('change', e=>{
   const c = DATA.customers.find(c=>c.Name===e.target.value);
   if(c){
     document.getElementById('cName').value = c.Name;
-    document.getElementById('cVillage').value = c.Village;
     document.getElementById('cMobile').value = c.Mobile;
     document.getElementById('cGstin').value = c.GSTIN||'';
-    document.getElementById('cType').value = c.Type||'Farmer';
     document.getElementById('cGstin').dispatchEvent(new Event('input'));
   }
 });
 
 document.getElementById('saveCustBtn').addEventListener('click', async ()=>{
+  const gstin = document.getElementById('cGstin').value;
   const c = {
     Name: document.getElementById('cName').value,
-    Village: document.getElementById('cVillage').value,
+    Village: '',
     Mobile: document.getElementById('cMobile').value,
-    GSTIN: document.getElementById('cGstin').value,
-    Type: document.getElementById('cType').value
+    GSTIN: gstin,
+    Type: gstin ? 'Dealer' : 'Farmer'
   };
   if(!c.Name){ toast('Enter customer name'); return; }
   const r = await api('saveCustomer', c);
@@ -589,8 +632,7 @@ document.getElementById('clearSaleBtn').addEventListener('click', ()=>resetSaleF
 function resetSaleForm(){
   saleItems = [];
   document.querySelector('#saleTable tbody').innerHTML='';
-  ['cName','cVillage','cMobile','cGstin','custSearch'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('cType').value='Farmer';
+  ['cName','cMobile','cGstin','custSearch'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('taxType').value='CGST_SGST';
   document.getElementById('amountReceived').value=0;
   recalcSaleTotals();
@@ -610,7 +652,7 @@ document.getElementById('saveSaleBtn').addEventListener('click', async ()=>{
   const payload = {
     date: document.getElementById('saleDate').value || new Date().toISOString().substring(0,10),
     customerId:'', customerName: document.getElementById('cName').value,
-    village: document.getElementById('cVillage').value,
+    village: '',
     mobile: document.getElementById('cMobile').value,
     gstin: document.getElementById('cGstin').value,
     items: items.map(it=>({prodId:it.prodId,name:it.name,hsn:it.hsn,gst:it.gst,qty:it.qty,unit:it.unit,rate:it.rate})),
@@ -657,7 +699,6 @@ function printBill(sale, billNo){
   document.getElementById('pvBillNo').textContent = billNo;
   document.getElementById('pvDate').textContent = sale.date;
   document.getElementById('pvCustName').textContent = sale.customerName;
-  document.getElementById('pvCustVillage').textContent = sale.village;
   document.getElementById('pvCustMobile').textContent = sale.mobile;
   document.getElementById('pvCustGstinWrap').style.display = sale.gstin ? 'inline':'none';
   document.getElementById('pvCustGstin').textContent = sale.gstin||'';
@@ -901,7 +942,7 @@ function renderCustTable(){
   tbody.innerHTML = rows.map(c=>{
     const o = customerOutstanding(c.Name);
     const outClass = o.outstanding>0 ? 'style="color:var(--danger);font-weight:700;"' : (o.outstanding<0 ? 'style="color:var(--green);font-weight:700;"' : '');
-    return `<tr><td>${c.Name}</td><td>${c.Village||''}</td><td>${c.Mobile||''}</td><td>${c.GSTIN||''}</td><td>${c.Type||''}</td><td>₹${o.billed.toFixed(2)}</td><td>₹${o.received.toFixed(2)}</td><td ${outClass}>₹${o.outstanding.toFixed(2)}${o.outstanding<0?' (Advance)':''}</td><td><button class="btn outline sm stmtBtn" data-name="${c.Name}">Statement</button></td></tr>`;
+    return `<tr><td>${c.Name}</td><td>${c.Mobile||''}</td><td>${c.GSTIN||''}</td><td>₹${o.billed.toFixed(2)}</td><td>₹${o.received.toFixed(2)}</td><td ${outClass}>₹${o.outstanding.toFixed(2)}${o.outstanding<0?' (Advance)':''}</td><td><button class="btn outline sm stmtBtn" data-name="${c.Name}">Statement</button></td></tr>`;
   }).join('');
   tbody.querySelectorAll('.stmtBtn').forEach(b=>b.addEventListener('click', ()=>printStatement(b.dataset.name)));
 }
@@ -974,7 +1015,6 @@ function printStatement(customerName){
   document.getElementById('stShopAddr').textContent = SHOP_INFO.Address + ', ' + SHOP_INFO.Village + ' - ' + SHOP_INFO.Pincode + ', ' + SHOP_INFO.State;
   document.getElementById('stAsOn').textContent = new Date().toISOString().substring(0,10);
   document.getElementById('stCustName').textContent = customerName;
-  document.getElementById('stCustVillage').textContent = cust.Village||'';
   document.getElementById('stCustMobile').textContent = cust.Mobile||'';
   document.getElementById('stBody').innerHTML = rows || '<tr><td colspan="6" style="text-align:center;color:#888;">No transactions</td></tr>';
   document.getElementById('stFinalLabel').textContent = bal>=0 ? 'Total Outstanding (Due from customer)' : 'Advance with us';
