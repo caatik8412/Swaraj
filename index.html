@@ -64,7 +64,21 @@
   .inv-box{border:1px solid #999;padding:8px;font-size:12px;border-radius:4px;}
   .small-muted{font-size:11px;color:var(--muted);}
 
+  /* ITEM CARDS (sale & purchase entry) */
+  .item-card{border:1px solid var(--border);border-radius:8px;padding:10px 10px 8px;margin-bottom:8px;background:#FAFBF8;}
+  .item-card .item-line1{margin-bottom:8px;}
+  .item-card .item-line1 input{width:100%;font-size:15px;padding:10px;font-weight:600;}
+  .item-card .item-line2{display:flex;gap:8px;align-items:flex-end;}
+  .item-card .mini{flex:1;min-width:0;}
+  .item-card .mini label{font-size:10.5px;margin-bottom:2px;}
+  .item-card .mini input{width:100%;padding:9px 6px;text-align:center;}
+  .item-card .unit-badge{background:#EEF3EA;border:1px solid var(--border);border-radius:6px;padding:9px 6px;font-size:13px;font-weight:700;color:var(--text);text-align:center;}
+  .item-card .rowDel{flex:0 0 auto;align-self:flex-end;}
+  .item-card .item-summary{margin-top:8px;padding-top:6px;border-top:1px dashed var(--border);display:flex;justify-content:space-between;font-size:12px;color:var(--muted);}
+  .item-card .item-summary b{color:var(--green);font-size:14px;}
+
   /* ---------- MOBILE ---------- */
+  #bottomNav{display:none;}
   @media (max-width: 680px){
     header{padding:10px 14px;}
     header h1{font-size:16px;}
@@ -92,7 +106,6 @@
     #bottomNav button .ic{font-size:18px;line-height:1;}
     #bottomNav button.active{color:var(--green);}
   }
-  #bottomNav{display:none;}
 </style>
 </head>
 <body>
@@ -144,10 +157,7 @@
 
   <div class="card">
     <h3>Items</h3>
-    <table id="saleTable">
-      <thead><tr><th style="width:30%;">Product</th><th>GST%</th><th>Qty</th><th>Unit</th><th>Rate</th><th>Taxable</th><th>Tax</th><th>Total</th><th></th></tr></thead>
-      <tbody></tbody>
-    </table>
+    <div id="saleItemsList"></div>
     <button class="btn outline sm" id="addRowBtn" style="margin-top:8px;">+ Add Item</button>
   </div>
 
@@ -204,10 +214,7 @@
   </div>
   <div class="card">
     <h3>Items Received</h3>
-    <table id="purchTable">
-      <thead><tr><th style="width:26%;">Product</th><th>GST%</th><th>Qty</th><th>Unit</th><th>Purch. Rate</th><th>Taxable</th><th>GST Amt</th><th>Total</th><th></th></tr></thead>
-      <tbody></tbody>
-    </table>
+    <div id="purchItemsList"></div>
     <button class="btn outline sm" id="addPurchRowBtn" style="margin-top:8px;">+ Add Item</button>
   </div>
   <div class="card total-box">
@@ -483,20 +490,25 @@ document.getElementById('bottomNav').addEventListener('click', e=>{
 function addSaleRow(){
   const idx = saleItems.length;
   saleItems.push({ prodId:'', name:'', hsn:'', gst:0, qty:1, unit:'', rate:0 });
-  const tr = document.createElement('tr');
-  tr.innerHTML = `
-    <td><input list="prodList" data-i="${idx}" class="rowProd" placeholder="Type product..."></td>
-    <td><span class="rowGstPct">0</span>%</td>
-    <td><input type="number" class="rowQty" value="1" min="0" step="0.01"></td>
-    <td><span class="rowUnit">-</span></td>
-    <td><input type="number" class="rowRate" value="0" step="0.01"></td>
-    <td class="rowTaxable">0.00</td>
-    <td class="rowTax">0.00</td>
-    <td class="rowTotal">0.00</td>
-    <td><button class="btn danger sm rowDel">✕</button></td>
+  const card = document.createElement('div');
+  card.className = 'item-card';
+  card.innerHTML = `
+    <div class="item-line1"><input list="prodList" data-i="${idx}" class="rowProd" placeholder="Search / select product..."></div>
+    <div class="item-line2">
+      <div class="mini"><label>Unit</label><div class="unit-badge rowUnit">-</div></div>
+      <div class="mini"><label>Rate (₹)</label><input type="number" class="rowRate" value="0" step="0.01"></div>
+      <div class="mini"><label>Qty</label><input type="number" class="rowQty" value="1" min="0" step="0.01"></div>
+      <button class="btn danger sm rowDel">✕</button>
+    </div>
+    <div class="item-summary">
+      <span>GST <span class="rowGstPct">0</span>%</span>
+      <span>Taxable ₹<span class="rowTaxable">0.00</span></span>
+      <span>Tax ₹<span class="rowTax">0.00</span></span>
+      <span>Total <b>₹<span class="rowTotal">0.00</span></b></span>
+    </div>
   `;
-  document.querySelector('#saleTable tbody').appendChild(tr);
-  wireSaleRow(tr, idx);
+  document.getElementById('saleItemsList').appendChild(card);
+  wireSaleRow(card, idx);
 }
 
 function ensureProdDatalist(){
@@ -517,10 +529,10 @@ function findProductByName(name){
   return DATA.products.find(p=>p.Name.toLowerCase()===String(name).toLowerCase());
 }
 
-function wireSaleRow(tr, idx){
-  const prodInput = tr.querySelector('.rowProd');
-  const qtyInput = tr.querySelector('.rowQty');
-  const rateInput = tr.querySelector('.rowRate');
+function wireSaleRow(card, idx){
+  const prodInput = card.querySelector('.rowProd');
+  const qtyInput = card.querySelector('.rowQty');
+  const rateInput = card.querySelector('.rowRate');
 
   prodInput.addEventListener('change', ()=>{
     const p = findProductByName(prodInput.value);
@@ -531,30 +543,30 @@ function wireSaleRow(tr, idx){
       saleItems[idx].gst = Number(p.GSTRate)||0;
       saleItems[idx].unit = p.Unit;
       saleItems[idx].rate = Number(p.SaleRate)||0;
-      tr.querySelector('.rowGstPct').textContent = p.GSTRate||0;
-      tr.querySelector('.rowUnit').textContent = p.Unit||'-';
+      card.querySelector('.rowGstPct').textContent = p.GSTRate||0;
+      card.querySelector('.rowUnit').textContent = p.Unit||'-';
       rateInput.value = p.SaleRate||0;
     }
-    recalcSaleRow(idx, tr);
+    recalcSaleRow(idx, card);
   });
-  qtyInput.addEventListener('input', ()=>{ saleItems[idx].qty = Number(qtyInput.value)||0; recalcSaleRow(idx, tr); });
-  rateInput.addEventListener('input', ()=>{ saleItems[idx].rate = Number(rateInput.value)||0; recalcSaleRow(idx, tr); });
-  tr.querySelector('.rowDel').addEventListener('click', ()=>{
+  qtyInput.addEventListener('input', ()=>{ saleItems[idx].qty = Number(qtyInput.value)||0; recalcSaleRow(idx, card); });
+  rateInput.addEventListener('input', ()=>{ saleItems[idx].rate = Number(rateInput.value)||0; recalcSaleRow(idx, card); });
+  card.querySelector('.rowDel').addEventListener('click', ()=>{
     saleItems[idx] = null;
-    tr.remove();
+    card.remove();
     recalcSaleTotals();
   });
 }
 
-function recalcSaleRow(idx, tr){
+function recalcSaleRow(idx, card){
   const it = saleItems[idx];
   if(!it) return;
   const taxable = it.qty * it.rate;
   const tax = taxable * it.gst / 100;
   const total = taxable + tax;
-  tr.querySelector('.rowTaxable').textContent = taxable.toFixed(2);
-  tr.querySelector('.rowTax').textContent = tax.toFixed(2);
-  tr.querySelector('.rowTotal').textContent = total.toFixed(2);
+  card.querySelector('.rowTaxable').textContent = taxable.toFixed(2);
+  card.querySelector('.rowTax').textContent = tax.toFixed(2);
+  card.querySelector('.rowTotal').textContent = total.toFixed(2);
   recalcSaleTotals();
 }
 
@@ -631,7 +643,7 @@ document.getElementById('saveCustBtn').addEventListener('click', async ()=>{
 document.getElementById('clearSaleBtn').addEventListener('click', ()=>resetSaleForm());
 function resetSaleForm(){
   saleItems = [];
-  document.querySelector('#saleTable tbody').innerHTML='';
+  document.getElementById('saleItemsList').innerHTML='';
   ['cName','cMobile','cGstin','custSearch'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('taxType').value='CGST_SGST';
   document.getElementById('amountReceived').value=0;
@@ -777,49 +789,54 @@ document.getElementById('regSearch').addEventListener('input', renderRegister);
 function addPurchRow(){
   const idx = purchItems.length;
   purchItems.push({ prodId:'', name:'', gst:0, qty:1, unit:'', rate:0 });
-  const tr = document.createElement('tr');
-  tr.innerHTML = `
-    <td><input list="prodList" class="prRowProd" placeholder="Type product..."></td>
-    <td><span class="prRowGst">0</span>%</td>
-    <td><input type="number" class="prRowQty" value="1" step="0.01"></td>
-    <td><span class="prRowUnit">-</span></td>
-    <td><input type="number" class="prRowRate" value="0" step="0.01"></td>
-    <td class="prRowTaxable">0.00</td>
-    <td class="prRowGstAmt">0.00</td>
-    <td class="prRowTotal">0.00</td>
-    <td><button class="btn danger sm prRowDel">✕</button></td>
+  const card = document.createElement('div');
+  card.className = 'item-card';
+  card.innerHTML = `
+    <div class="item-line1"><input list="prodList" class="prRowProd" placeholder="Search / select product..."></div>
+    <div class="item-line2">
+      <div class="mini"><label>Unit</label><div class="unit-badge prRowUnit">-</div></div>
+      <div class="mini"><label>Rate (₹)</label><input type="number" class="prRowRate" value="0" step="0.01"></div>
+      <div class="mini"><label>Qty</label><input type="number" class="prRowQty" value="1" step="0.01"></div>
+      <button class="btn danger sm prRowDel">✕</button>
+    </div>
+    <div class="item-summary">
+      <span>GST <span class="prRowGst">0</span>%</span>
+      <span>Taxable ₹<span class="prRowTaxable">0.00</span></span>
+      <span>GST Amt ₹<span class="prRowGstAmt">0.00</span></span>
+      <span>Total <b>₹<span class="prRowTotal">0.00</span></b></span>
+    </div>
   `;
-  document.querySelector('#purchTable tbody').appendChild(tr);
-  wirePurchRow(tr, idx);
+  document.getElementById('purchItemsList').appendChild(card);
+  wirePurchRow(card, idx);
 }
 
-function wirePurchRow(tr, idx){
-  const prodInput = tr.querySelector('.prRowProd');
-  const qtyInput = tr.querySelector('.prRowQty');
-  const rateInput = tr.querySelector('.prRowRate');
+function wirePurchRow(card, idx){
+  const prodInput = card.querySelector('.prRowProd');
+  const qtyInput = card.querySelector('.prRowQty');
+  const rateInput = card.querySelector('.prRowRate');
   prodInput.addEventListener('change', ()=>{
     const p = findProductByName(prodInput.value);
     if(p){
       purchItems[idx].prodId=p.ID; purchItems[idx].name=p.Name; purchItems[idx].gst=Number(p.GSTRate)||0;
       purchItems[idx].unit=p.Unit; purchItems[idx].rate=Number(p.PurchaseRate)||0;
-      tr.querySelector('.prRowGst').textContent = p.GSTRate||0;
-      tr.querySelector('.prRowUnit').textContent = p.Unit||'-';
+      card.querySelector('.prRowGst').textContent = p.GSTRate||0;
+      card.querySelector('.prRowUnit').textContent = p.Unit||'-';
       rateInput.value = p.PurchaseRate||0;
     }
-    recalcPurchRow(idx, tr);
+    recalcPurchRow(idx, card);
   });
-  qtyInput.addEventListener('input', ()=>{ purchItems[idx].qty=Number(qtyInput.value)||0; recalcPurchRow(idx, tr); });
-  rateInput.addEventListener('input', ()=>{ purchItems[idx].rate=Number(rateInput.value)||0; recalcPurchRow(idx, tr); });
-  tr.querySelector('.prRowDel').addEventListener('click', ()=>{ purchItems[idx]=null; tr.remove(); recalcPurchTotals(); });
+  qtyInput.addEventListener('input', ()=>{ purchItems[idx].qty=Number(qtyInput.value)||0; recalcPurchRow(idx, card); });
+  rateInput.addEventListener('input', ()=>{ purchItems[idx].rate=Number(rateInput.value)||0; recalcPurchRow(idx, card); });
+  card.querySelector('.prRowDel').addEventListener('click', ()=>{ purchItems[idx]=null; card.remove(); recalcPurchTotals(); });
 }
 
-function recalcPurchRow(idx, tr){
+function recalcPurchRow(idx, card){
   const it = purchItems[idx]; if(!it) return;
   const taxable = it.qty*it.rate;
   const gstAmt = taxable*it.gst/100;
-  tr.querySelector('.prRowTaxable').textContent = taxable.toFixed(2);
-  tr.querySelector('.prRowGstAmt').textContent = gstAmt.toFixed(2);
-  tr.querySelector('.prRowTotal').textContent = (taxable+gstAmt).toFixed(2);
+  card.querySelector('.prRowTaxable').textContent = taxable.toFixed(2);
+  card.querySelector('.prRowGstAmt').textContent = gstAmt.toFixed(2);
+  card.querySelector('.prRowTotal').textContent = (taxable+gstAmt).toFixed(2);
   recalcPurchTotals();
 }
 function recalcPurchTotals(){
@@ -845,7 +862,7 @@ document.getElementById('savePurchBtn').addEventListener('click', async ()=>{
   };
   await api('savePurchase', payload);
   toast('Purchase saved, stock updated');
-  purchItems=[]; document.querySelector('#purchTable tbody').innerHTML='';
+  purchItems=[]; document.getElementById('purchItemsList').innerHTML='';
   ['pSupplier','pInvoiceNo'].forEach(id=>document.getElementById(id).value='');
   recalcPurchTotals();
   addPurchRow();
